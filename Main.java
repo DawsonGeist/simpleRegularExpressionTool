@@ -1,3 +1,5 @@
+import java.io.*;
+import java.util.*;
 
 public class Main {
 	public static final int ROWS = 39;
@@ -1114,8 +1116,7 @@ public class Main {
 						i++;	
 					}
 					i-=2;
-				}
-				
+				}				
 				//move to next state in state table
 				currentState++;
 			}
@@ -1126,7 +1127,6 @@ public class Main {
 				{
 					startIndex = i;
 				}
-				
 				//check for repeated instances
 				if(table[REPEAT][currentState])
 				{
@@ -1181,7 +1181,6 @@ public class Main {
 					}
 					i-=2;
 				}
-				
 				//move to next state in state table
 				currentState++;
 			}
@@ -1189,20 +1188,23 @@ public class Main {
 			{
 				//move to next state in state table
 				currentState++;
-				i--;
-				
 				//Empty string is accepted do not instantiate starting index
 			}
 			else if(table[ACCEPTING][currentState])
 			{
 				//accepting state flag = true
-				//end index = i+1
 				flag = true;
 				endIndex = i + 1;
 				break;
 			}
 			else
 			{
+				if(currentState !=0)
+				{
+					i--;
+					currentState = 0;
+					startIndex = -1;
+				}
 				//not a matching state so send state machine back to 0
 				currentState = 0;
 				startIndex = -1;
@@ -1220,18 +1222,34 @@ public class Main {
 			if(table[ACCEPTING][currentState])
 			{
 				//accepting state flag = true
-				//end index = i+1
 				flag = true;
 				endIndex = i + 1;
 				break;
+			}	
+		}	
+		return flag;
+	}
+	
+	public static boolean findStar(char goal, char[] target)
+	{
+		boolean flag = false;
+		for(int i = 0; i < target.length; i++)
+		{
+			if(goal == target[i])
+			{
+				flag = true;
+				startIndex = i;
+				while(goal == target[i])
+				{
+					i++;
+				}
+				endIndex = i;
 			}
-			
 		}
-		
 		return flag;
 	}
 
-	public static void main(String[] args) 
+	public static void main(String[] argv) throws Exception
 	{
 		/*State 1; State 2; ... 50
 		 *   A   ;
@@ -1249,184 +1267,56 @@ public class Main {
 		
 		boolean [] [] stateTable = new boolean [ROWS] [COLLUMNS];
 		
-		//condition will determine what row we are looking at
-		int condition = 0;
+		String regularExpression = argv[0];
+		char[] regularExpressionChars = regularExpression.toCharArray();
+		File inputFile = new File(argv[1]);
+		Scanner fileReader = new Scanner(inputFile);
 		
-		//state will look at what collumn we are in
-		int state = 0;
+		stateTable = createTable(stateTable, regularExpressionChars);
+		boolean found = false;
+		int count = 0;
 		
-		
-				
-				//test 1 
-				String regExp = "a*[123]a*";
-				char[] expression = regExp.toCharArray();
-				String target = "aaaab1aaaa";
-				char[] targetString = target.toCharArray();
-				stateTable = createTable(stateTable, expression);
-				boolean found = testLine(stateTable, targetString);
-				System.out.println(found);
-				if(found && startIndex == -1)
+		if(regularExpressionChars.length == 2 && regularExpression.charAt(1) == '*')
+		{
+			while(fileReader.hasNextLine())
+			{
+				String target = fileReader.nextLine();
+				char[] targetLine = target.toCharArray();
+				found = findStar(regularExpressionChars[0], targetLine);
+				if(found && startIndex != -1)
 				{
-					System.out.println(target);
-				}
-				else if(found)
-				{
-					System.out.println(target.substring(startIndex, endIndex));
+					System.out.println("Match found on line " + count + ", starting at position " + startIndex + " and ending at position " + (endIndex-1) + ": " + target.substring(startIndex, endIndex));
 				}
 				else
 				{
-					System.out.println("Not in String");
+					System.out.println("No match found on this line");
 				}
-				
-				//clear table reset index
-				
-				for(int i = 0; i < ROWS; i++)
-				{
-					for(int j = 0; j < COLLUMNS; j++)
-					{
-						stateTable[i][j] = false;
-					}
-				}
-				
 				startIndex = -1;
 				endIndex = -1;
-
-				//test 2 
-				regExp = "a*cb+ea*";
-				expression = regExp.toCharArray();
-				target = "cbbbbbe";
-				targetString = target.toCharArray();
-				stateTable = createTable(stateTable, expression);
-				found = testLine(stateTable, targetString);
-				System.out.println(found);
-				if(found && startIndex == -1)
+				count++;
+			}
+		}
+		else
+		{
+			while(fileReader.hasNextLine())
+			{
+				String target = fileReader.nextLine();
+				char[] targetLine = target.toCharArray();
+				found = testLine(stateTable, targetLine);
+				if(found && startIndex != -1)
 				{
-					System.out.println(target);
-				}
-				else if(found)
-				{
-					System.out.println(target.substring(startIndex, endIndex));
+					System.out.println("Match found on line " + count + ", starting at position " + startIndex + " and ending at position " + (endIndex-1) + ": " + target.substring(startIndex, endIndex));
 				}
 				else
 				{
-					System.out.println("Not in String");
+					System.out.println("No match found on this line");
 				}
-				
-				//clear table reset index
-				
-				for(int i = 0; i < ROWS; i++)
-				{
-					for(int j = 0; j < COLLUMNS; j++)
-					{
-						stateTable[i][j] = false;
-					}
-				}
-				
 				startIndex = -1;
 				endIndex = -1;
-				
-				//test 3 
-				regExp = "a*b*c[123]";
-				expression = regExp.toCharArray();
-				target = "aaaac3";
-				targetString = target.toCharArray();
-				stateTable = createTable(stateTable, expression);
-				found = testLine(stateTable, targetString);
-				System.out.println(found);
-				if(found && startIndex == -1)
-				{
-					System.out.println(target);
-				}
-				else if(found)
-				{
-					System.out.println(target.substring(startIndex, endIndex));
-				}
-				else
-				{
-					System.out.println("Not in String");
-				}
-				
-				//clear table reset index
-				
-				for(int i = 0; i < ROWS; i++)
-				{
-					for(int j = 0; j < COLLUMNS; j++)
-					{
-						stateTable[i][j] = false;
-					}
-				}
-				
-				startIndex = -1;
-				endIndex = -1;
-				
-				//test 4 
-				regExp = "f+[1as]b*[123]";
-				expression = regExp.toCharArray();
-				target = "fff11";
-				targetString = target.toCharArray();
-				stateTable = createTable(stateTable, expression);
-				found = testLine(stateTable, targetString);
-				System.out.println(found);
-				if(found && startIndex == -1)
-				{
-					System.out.println(target);
-				}
-				else if(found)
-				{
-					System.out.println(target.substring(startIndex, endIndex));
-				}
-				else
-				{
-					System.out.println("Not in String");
-				}
-				
-				//clear table reset index
-				
-				for(int i = 0; i < ROWS; i++)
-				{
-					for(int j = 0; j < COLLUMNS; j++)
-					{
-						stateTable[i][j] = false;
-					}
-				}
-				
-				startIndex = -1;
-				endIndex = -1;
-				
-				//test 5 
-				regExp = "[123][456]a*b*c+fab";
-				expression = regExp.toCharArray();
-				target = "aaaaa35aaacfab";
-				targetString = target.toCharArray();
-				stateTable = createTable(stateTable, expression);
-				found = testLine(stateTable, targetString);
-				System.out.println(found);
-				if(found && startIndex == -1)
-				{
-					System.out.println(target);
-				}
-				else if(found)
-				{
-					System.out.println(target.substring(startIndex, endIndex));
-				}
-				else
-				{
-					System.out.println("Not in String");
-				}
-				
-				//clear table reset index
-				
-				for(int i = 0; i < ROWS; i++)
-				{
-					for(int j = 0; j < COLLUMNS; j++)
-					{
-						stateTable[i][j] = false;
-					}
-				}
-				
-				startIndex = -1;
-				endIndex = -1;
-		
+				count++;
+			}
+		}
+		fileReader.close();
 	}
 
 }
